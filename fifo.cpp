@@ -292,9 +292,6 @@ boolean ComplexEventManager::Fifo::popEvent(int* eventCode, int* eventParam)
 
 int ComplexEventManager::Fifo::avg()
 {
-  //Serial.println("------------");
-  //Serial.println(fifo_tail);
-  //Serial.println(fifo_head);
   unsigned long sum = 0;
   int i = fifo_head;
   while (i != fifo_tail)
@@ -302,7 +299,5 @@ int ComplexEventManager::Fifo::avg()
     sum += fifo[i].param;
     i = (i +1)%FIFO_SIZE;
   }
-  //String s = "sum ";
-  //Serial.println(s + sum);
   return sum/length();
 }
