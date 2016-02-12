@@ -196,52 +196,52 @@ inline int ComplexEventManager::avg()
 
 inline boolean ComplexEventManager::addListener( int eventCode, EventListener listener )
 {
-    return mListeners.addListener( eventCode, listener );
+  return mListeners.addListener( eventCode, listener );
 }
 
 inline boolean ComplexEventManager::removeListener( int eventCode, EventListener listener )
 {
-    return mListeners.removeListener( eventCode, listener );
+  return mListeners.removeListener( eventCode, listener );
 }
 
 inline int ComplexEventManager::removeListener( EventListener listener )
 {
-    return mListeners.removeListener( listener );
+  return mListeners.removeListener( listener );
 }
 
 inline boolean ComplexEventManager::enableListener( int eventCode, EventListener listener, boolean enable )
 {
-    return mListeners.enableListener( eventCode, listener, enable );
+  return mListeners.enableListener( eventCode, listener, enable );
 }
 
 inline boolean ComplexEventManager::isListenerEnabled( int eventCode, EventListener listener )
 {
-    return mListeners.isListenerEnabled( eventCode, listener );
+  return mListeners.isListenerEnabled( eventCode, listener );
 }
 
 inline boolean ComplexEventManager::setDefaultListener( EventListener listener )
 {
-    return mListeners.setDefaultListener( listener );
+  return mListeners.setDefaultListener( listener );
 }
 
 inline void ComplexEventManager::removeDefaultListener()
 {
-    mListeners.removeDefaultListener();
+  mListeners.removeDefaultListener();
 }
 
 inline void ComplexEventManager::enableDefaultListener( boolean enable )
 {
-    mListeners.enableDefaultListener( enable );
+  mListeners.enableDefaultListener( enable );
 }
 
 inline boolean ComplexEventManager::isListenerListEmpty()
 {
-    return mListeners.isEmpty();
+  return mListeners.isEmpty();
 }
 
 inline boolean ComplexEventManager::isListenerListFull()
 {
-    return mListeners.isFull();
+  return mListeners.isFull();
 }
 
 inline boolean ComplexEventManager::isEventQueueFull()
@@ -266,16 +266,16 @@ inline boolean ComplexEventManager::queueEvent(int eventCode,int eventParam)
 
 inline boolean ComplexEventManager::ListenerList::isEmpty()
 {
-    return (mNumListeners == 0);
+  return (mNumListeners == 0);
 }
 
 inline boolean ComplexEventManager::ListenerList::isFull()
 {
-    return (mNumListeners == kMaxListeners);
+  return (mNumListeners == kMaxListeners);
 }
 
 inline int ComplexEventManager::ListenerList::getNumEntries()
 {
-    return mNumListeners;
+  return mNumListeners;
 }
 #endif

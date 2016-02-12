@@ -6,239 +6,239 @@ ComplexEventManager::ComplexEventManager() : mFifo()
 int ComplexEventManager::processEvent()
 {
 
-    int eventCode;
-    int param;
-    int handledCount = 0;
+  int eventCode;
+  int param;
+  int handledCount = 0;
 
-    if ( mFifo.popEvent( &eventCode, &param ) )
-    {
-        handledCount = mListeners.sendEvent( eventCode, param );
-    }
+  if ( mFifo.popEvent( &eventCode, &param ) )
+  {
+    handledCount = mListeners.sendEvent( eventCode, param );
+  }
 
-    return handledCount;
+  return handledCount;
 }
 
 
 /************************************************/
 ComplexEventManager::ListenerList::ListenerList() :
-mNumListeners( 0 ), mDefaultCallback( 0 )
+  mNumListeners( 0 ), mDefaultCallback( 0 )
 {
 }
 
 int ComplexEventManager::ListenerList::numListeners()
 {
-    return mNumListeners;
+  return mNumListeners;
 };
 
 int ComplexEventManager::numListeners()
 {
-    return mListeners.numListeners();
+  return mListeners.numListeners();
 };
 
 boolean ComplexEventManager::ListenerList::addListener( int eventCode, EventListener listener )
 {
-    // Argument check
-    if ( !listener )
-    {
-        return false;
-    }
+  // Argument check
+  if ( !listener )
+  {
+    return false;
+  }
 
-    // Check for full dispatch table
-    if ( isFull() )
-    {
-        return false;
-    }
+  // Check for full dispatch table
+  if ( isFull() )
+  {
+    return false;
+  }
 
-    mListeners[ mNumListeners ].callback = listener;
-    mListeners[ mNumListeners ].eventCode = eventCode;
-    mListeners[ mNumListeners ].enabled 	= true;
-    mNumListeners++;
+  mListeners[ mNumListeners ].callback = listener;
+  mListeners[ mNumListeners ].eventCode = eventCode;
+  mListeners[ mNumListeners ].enabled 	= true;
+  mNumListeners++;
 
-    return true;
+  return true;
 }
 
 
 boolean ComplexEventManager::ListenerList::removeListener( int eventCode, EventListener listener )
 {
-    if ( mNumListeners == 0 )
-    {
-        return false;
-    }
+  if ( mNumListeners == 0 )
+  {
+    return false;
+  }
 
-    int k = searchListeners( eventCode, listener );
-    if ( k < 0 )
-    {
-        return false;
-    }
+  int k = searchListeners( eventCode, listener );
+  if ( k < 0 )
+  {
+    return false;
+  }
 
-    for ( int i = k; i < mNumListeners - 1; i++ )
-    {
-        mListeners[ i ].callback  = mListeners[ i + 1 ].callback;
-        mListeners[ i ].eventCode = mListeners[ i + 1 ].eventCode;
-        mListeners[ i ].enabled   = mListeners[ i + 1 ].enabled;
-    }
-    mNumListeners--;
+  for ( int i = k; i < mNumListeners - 1; i++ )
+  {
+    mListeners[ i ].callback  = mListeners[ i + 1 ].callback;
+    mListeners[ i ].eventCode = mListeners[ i + 1 ].eventCode;
+    mListeners[ i ].enabled   = mListeners[ i + 1 ].enabled;
+  }
+  mNumListeners--;
 
-    return true;
+  return true;
 }
 
 
 int ComplexEventManager::ListenerList::removeListener( EventListener listener )
 {
-    if ( mNumListeners == 0 )
+  if ( mNumListeners == 0 )
+  {
+    return 0;
+  }
+
+  int removed = 0;
+  int k;
+  while ((k = searchListeners( listener )) >= 0 )
+  {
+    for ( int i = k; i < mNumListeners - 1; i++ )
     {
-        return 0;
+      mListeners[ i ].callback  = mListeners[ i + 1 ].callback;
+      mListeners[ i ].eventCode = mListeners[ i + 1 ].eventCode;
+      mListeners[ i ].enabled   = mListeners[ i + 1 ].enabled;
     }
+    mNumListeners--;
+    removed++;
+  }
 
-    int removed = 0;
-    int k;
-    while ((k = searchListeners( listener )) >= 0 )
-    {
-        for ( int i = k; i < mNumListeners - 1; i++ )
-        {
-            mListeners[ i ].callback  = mListeners[ i + 1 ].callback;
-            mListeners[ i ].eventCode = mListeners[ i + 1 ].eventCode;
-            mListeners[ i ].enabled   = mListeners[ i + 1 ].enabled;
-        }
-        mNumListeners--;
-        removed++;
-   }
-
-    return removed;
+  return removed;
 }
 
 
 boolean ComplexEventManager::ListenerList::enableListener( int eventCode, EventListener listener, boolean enable )
 {
-    if ( mNumListeners == 0 )
-    {
-        return false;
-    }
+  if ( mNumListeners == 0 )
+  {
+    return false;
+  }
 
-    int k = searchListeners( eventCode, listener );
-    if ( k < 0 )
-    {
-        return false;
-    }
+  int k = searchListeners( eventCode, listener );
+  if ( k < 0 )
+  {
+    return false;
+  }
 
-    mListeners[ k ].enabled = enable;
+  mListeners[ k ].enabled = enable;
 
-    return true;
+  return true;
 }
 
 
 boolean ComplexEventManager::ListenerList::isListenerEnabled( int eventCode, EventListener listener )
 {
-    if ( mNumListeners == 0 )
-    {
-        return false;
-    }
+  if ( mNumListeners == 0 )
+  {
+    return false;
+  }
 
-    int k = searchListeners( eventCode, listener );
-    if ( k < 0 )
-    {
-        return false;
-    }
+  int k = searchListeners( eventCode, listener );
+  if ( k < 0 )
+  {
+    return false;
+  }
 
-    return mListeners[ k ].enabled;
+  return mListeners[ k ].enabled;
 }
 
 
 int ComplexEventManager::ListenerList::sendEvent( int eventCode, int param )
 {
-    int handlerCount = 0;
-    for ( int i = 0; i < mNumListeners; i++ )
+  int handlerCount = 0;
+  for ( int i = 0; i < mNumListeners; i++ )
+  {
+    if ( ( mListeners[ i ].callback != 0 ) && ( mListeners[ i ].eventCode == eventCode ) && mListeners[ i ].enabled )
     {
-        if ( ( mListeners[ i ].callback != 0 ) && ( mListeners[ i ].eventCode == eventCode ) && mListeners[ i ].enabled )
-        {
-            handlerCount++;
-            (*mListeners[ i ].callback)( eventCode, param );
-        }
+      handlerCount++;
+      (*mListeners[ i ].callback)( eventCode, param );
+    }
+  }
+
+  if ( !handlerCount )
+  {
+    if ( ( mDefaultCallback != 0 ) && mDefaultCallbackEnabled )
+    {
+      handlerCount++;
+      (*mDefaultCallback)( eventCode, param );
+
     }
 
-    if ( !handlerCount )
-    {
-        if ( ( mDefaultCallback != 0 ) && mDefaultCallbackEnabled )
-        {
-            handlerCount++;
-            (*mDefaultCallback)( eventCode, param );
+  }
 
-        }
-
-    }
-
-    return handlerCount;
+  return handlerCount;
 }
 
 
 boolean ComplexEventManager::ListenerList::setDefaultListener( EventListener listener )
 {
-    if ( listener == 0 )
-    {
-        return false;
-    }
+  if ( listener == 0 )
+  {
+    return false;
+  }
 
-    mDefaultCallback = listener;
-    mDefaultCallbackEnabled = true;
-    return true;
+  mDefaultCallback = listener;
+  mDefaultCallbackEnabled = true;
+  return true;
 }
 
 
 void ComplexEventManager::ListenerList::removeDefaultListener()
 {
-    mDefaultCallback = 0;
-    mDefaultCallbackEnabled = false;
+  mDefaultCallback = 0;
+  mDefaultCallbackEnabled = false;
 }
 
 
 void ComplexEventManager::ListenerList::enableDefaultListener( boolean enable )
 {
-    mDefaultCallbackEnabled = enable;
+  mDefaultCallbackEnabled = enable;
 }
 
 
 int ComplexEventManager::ListenerList::searchListeners( int eventCode, EventListener listener )
 {
 
-    for ( int i = 0; i < mNumListeners; i++ )
+  for ( int i = 0; i < mNumListeners; i++ )
+  {
+
+
+    if ( ( mListeners[i].eventCode == eventCode ) && ( mListeners[i].callback == listener ) )
     {
-
-
-        if ( ( mListeners[i].eventCode == eventCode ) && ( mListeners[i].callback == listener ) )
-        {
-            return i;
-        }
+      return i;
     }
+  }
 
-    return -1;
+  return -1;
 }
 
 
 int ComplexEventManager::ListenerList::searchListeners( EventListener listener )
 {
-    for ( int i = 0; i < mNumListeners; i++ )
+  for ( int i = 0; i < mNumListeners; i++ )
+  {
+    if ( mListeners[i].callback == listener )
     {
-        if ( mListeners[i].callback == listener )
-        {
-            return i;
-        }
+      return i;
     }
+  }
 
-    return -1;
+  return -1;
 }
 
 
 int ComplexEventManager::ListenerList::searchEventCode( int eventCode )
 {
-    for ( int i = 0; i < mNumListeners; i++ )
+  for ( int i = 0; i < mNumListeners; i++ )
+  {
+    if ( mListeners[i].eventCode == eventCode )
     {
-        if ( mListeners[i].eventCode == eventCode )
-        {
-            return i;
-        }
+      return i;
     }
+  }
 
-    return -1;
+  return -1;
 }
 /*****************************************************/
 // FIFO part
