@@ -78,12 +78,17 @@ class ComplexEventManager
     // this function might never return.  YOU HAVE BEEN WARNED.
     int processAllEvents();
 
+    // A more general approach should be used here, something like a
+    // function pointer to call and determine if a value must be kept
+    // or discarded
+    void filterGreater(int threshold);
+
     // compute the average _param_ value in the fifo
     int avg();
 
   private:
     /*
-     * All arithmetic operations on windows are entirely computed each time,
+     * All arithmetic operations on windows are entirely computed every time,
      * no temporary values are stored, this is an impl choice, no benchmarks
      * have been done.
      *
@@ -99,6 +104,7 @@ class ComplexEventManager
         boolean isFull();
 
         int avg();
+        ComplexEventManager::Fifo filterGreater(int threshold);
 
         boolean queueEvent(int eventCode, int eventParam);
         boolean popEvent(int* eventCode, int* eventParam);
@@ -199,6 +205,11 @@ class ComplexEventManager
 inline int ComplexEventManager::avg()
 {
   return mFifo.avg();
+}
+
+inline void ComplexEventManager::filterGreater(int threshold)
+{
+  mFifo = mFifo.filterGreater(threshold);
 }
 
 inline boolean ComplexEventManager::addListener( int eventCode, EventListener listener )

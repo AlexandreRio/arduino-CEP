@@ -1,4 +1,4 @@
-#include "fifo.h"
+#include "cep.h"
 
 ComplexEventManager::ComplexEventManager() : mFifo()
 {}
@@ -17,7 +17,6 @@ int ComplexEventManager::processEvent()
 
   return handledCount;
 }
-
 
 /************************************************/
 ComplexEventManager::ListenerList::ListenerList() :
@@ -300,4 +299,24 @@ int ComplexEventManager::Fifo::avg()
     i = (i +1)%FIFO_SIZE;
   }
   return sum/length();
+}
+
+ComplexEventManager::Fifo ComplexEventManager::Fifo::filterGreater(int threshold)
+{
+  //TODO something is wrong with the head and tail variable between the two instances
+  String s = "filtering in progress ";
+  int n = length();
+  Serial.println(s + n);
+  ComplexEventManager::Fifo new_fifo;
+  int i = fifo_head;
+  while (i != fifo_tail)
+  {
+    if (fifo[i].param >= threshold)
+    {
+      new_fifo.queueEvent(fifo[i].code, fifo[i].param);
+    }
+    i = (i +1)%FIFO_SIZE;
+  }
+
+  return new_fifo;
 }
