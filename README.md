@@ -1,4 +1,7 @@
 #Arduino-CEP
 
-Based on this: https://github.com/igormiktor/arduino-EventManager
-but currently re-written to allow operations over the events queues.
+Partially based on this: https://github.com/igormiktor/arduino-EventManager
+
+Current approach is to use a queue buffer to store event and perform operations,
+such as filtering and arithmetic. Goal is also to perform operations on multiple
+queues, like merging.
