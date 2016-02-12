@@ -78,9 +78,16 @@ class ComplexEventManager
     // this function might never return.  YOU HAVE BEEN WARNED.
     int processAllEvents();
 
+    // compute the average _param_ value in the fifo
     int avg();
 
   private:
+    /*
+     * All arithmetic operations on windows are entirely computed each time,
+     * no temporary values are stored, this is an impl choice, no benchmarks
+     * have been done.
+     *
+     */
     class Fifo
     {
       public:
