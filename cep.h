@@ -124,6 +124,33 @@ class ComplexEventManager
         int fifo_tail = 0;
     };
 
+    class TemporalFifo
+    {
+      public:
+        TemporalFifo(unsigned int length, unsigned int interval);
+
+        int length();
+        int available();
+        boolean isEmpty();
+        boolean isFull();
+
+        boolean queueEvent(int eventCode, int eventParam);
+      private:
+
+        struct TemporalEventElement
+        {
+          // might be resource consuming
+          unsigned long stamp;
+          int code;
+          int param;
+        };
+
+        unsigned long lastAdd = 0;
+        TemporalEventElement fifo[FIFO_SIZE];
+        int fifo_head = 0;
+        int fifo_tail = 0;
+    };
+
     // ListenerList class used internally by EventManager
     class ListenerList
     {

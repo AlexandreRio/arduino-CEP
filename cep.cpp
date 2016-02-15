@@ -334,7 +334,10 @@ ComplexEventManager::Fifo* ComplexEventManager::Fifo::filterGreater(int threshol
 {
   String s = "filtering in progress ";
   int n = length();
-  Serial.println(s + n);
+  String s1 = " [";
+  String s2 = ",";
+  String s3 = "]";
+  Serial.println(s + n + s1 + fifo_head + s2 + fifo_tail + s3);
 
   ComplexEventManager::Fifo new_fifo;
   int i = fifo_head;
@@ -349,3 +352,7 @@ ComplexEventManager::Fifo* ComplexEventManager::Fifo::filterGreater(int threshol
 
   return &new_fifo;
 }
+
+/*****************************************************/
+// TemporalFifo part
+/*****************************************************/
