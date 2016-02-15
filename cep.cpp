@@ -1,5 +1,9 @@
 #include "cep.h"
 
+/*****************************************************/
+// ComplexEventManager part
+/*****************************************************/
+
 ComplexEventManager::ComplexEventManager() : mFifo()
 {}
 
@@ -18,7 +22,10 @@ int ComplexEventManager::processEvent()
   return handledCount;
 }
 
-/************************************************/
+/*****************************************************/
+// ListenerList part
+/*****************************************************/
+
 ComplexEventManager::ListenerList::ListenerList() :
   mNumListeners( 0 ), mDefaultCallback( 0 )
 {
@@ -239,6 +246,7 @@ int ComplexEventManager::ListenerList::searchEventCode( int eventCode )
 
   return -1;
 }
+
 /*****************************************************/
 // FIFO part
 /*****************************************************/
