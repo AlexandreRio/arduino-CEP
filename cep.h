@@ -83,6 +83,7 @@ class ComplexEventManager
     // or discarded
     void filterGreater(int threshold);
 
+    void dump();
     // compute the average _param_ value in the fifo
     int avg();
 
@@ -104,7 +105,9 @@ class ComplexEventManager
         boolean isFull();
 
         int avg();
-        ComplexEventManager::Fifo filterGreater(int threshold);
+        //Dump the content of the event queue formatted to the Serial output
+        void dump();
+        ComplexEventManager::Fifo *filterGreater(int threshold);
 
         boolean queueEvent(int eventCode, int eventParam);
         boolean popEvent(int* eventCode, int* eventParam);
@@ -207,9 +210,14 @@ inline int ComplexEventManager::avg()
   return mFifo.avg();
 }
 
+inline void ComplexEventManager::dump()
+{
+  mFifo.dump();
+}
+
 inline void ComplexEventManager::filterGreater(int threshold)
 {
-  mFifo = mFifo.filterGreater(threshold);
+  mFifo = *mFifo.filterGreater(threshold);
 }
 
 inline boolean ComplexEventManager::addListener( int eventCode, EventListener listener )

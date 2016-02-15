@@ -299,6 +299,7 @@ boolean ComplexEventManager::Fifo::popEvent(int* eventCode, int* eventParam)
 
 int ComplexEventManager::Fifo::avg()
 {
+  dump();
   unsigned long sum = 0;
   int i = fifo_head;
   while (i != fifo_tail)
@@ -309,12 +310,32 @@ int ComplexEventManager::Fifo::avg()
   return sum/length();
 }
 
-ComplexEventManager::Fifo ComplexEventManager::Fifo::filterGreater(int threshold)
+void ComplexEventManager::Fifo::dump()
 {
-  //TODO something is wrong with the head and tail variable between the two instances
+  int i = fifo_head;
+  EventElement tmpEventElmt;
+  String lb = "<";
+  String co = ",";
+  String rb = ">";
+
+  while (i != fifo_tail)
+  {
+    tmpEventElmt = fifo[i];
+
+    Serial.print(lb + tmpEventElmt.code + co + tmpEventElmt.param + rb);
+
+    i = (i +1)%FIFO_SIZE;
+  }
+  Serial.println();
+
+}
+
+ComplexEventManager::Fifo* ComplexEventManager::Fifo::filterGreater(int threshold)
+{
   String s = "filtering in progress ";
   int n = length();
   Serial.println(s + n);
+
   ComplexEventManager::Fifo new_fifo;
   int i = fifo_head;
   while (i != fifo_tail)
@@ -326,5 +347,5 @@ ComplexEventManager::Fifo ComplexEventManager::Fifo::filterGreater(int threshold
     i = (i +1)%FIFO_SIZE;
   }
 
-  return new_fifo;
+  return &new_fifo;
 }
