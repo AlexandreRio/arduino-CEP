@@ -400,7 +400,7 @@ void ComplexEventManager::TemporalFifo::dump()
 void ComplexEventManager::TemporalFifo::trigger()
 {
   // look for oldest data
-  if ((length() > 0 )&& (millis() - fifo[fifo_head].stamp) > 4000) // TTL
+  if ((length() > 0 )&& (millis() - fifo[fifo_head].stamp) > TTL) // TTL
   {
     fifo_head = (fifo_head + 1) % FIFO_SIZE;
   }

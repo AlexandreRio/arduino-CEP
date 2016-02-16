@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 
+#define TTL 4000
 #define FIFO_SIZE 12
 #define EVENTMANAGER_LISTENER_LIST_SIZE 8
 
