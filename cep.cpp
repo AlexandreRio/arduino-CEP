@@ -4,7 +4,7 @@
 // ComplexEventManager part
 /*****************************************************/
 
-ComplexEventManager::ComplexEventManager() : mFifo()
+ComplexEventManager::ComplexEventManager() : mFifo(0, 400) // first param is actually ignored
 {}
 
 int ComplexEventManager::processEvent()
@@ -356,3 +356,87 @@ ComplexEventManager::Fifo* ComplexEventManager::Fifo::filterGreater(int threshol
 /*****************************************************/
 // TemporalFifo part
 /*****************************************************/
+ComplexEventManager::TemporalFifo::TemporalFifo(unsigned int length, unsigned int interval) : mLength(length), mInterval(interval)
+{}
+
+boolean ComplexEventManager::TemporalFifo::queueEvent(int eventCode, int eventParam, boolean timeCheck, unsigned long time)
+{
+  if (timeCheck && (millis() - lastAdd) < mInterval)
+    return 0; // litteraly too soon
+
+  int new_tail = (fifo_tail + 1) % FIFO_SIZE;
+  if (new_tail == fifo_head)
+  {
+    fifo_head = (fifo_head + 1) % FIFO_SIZE;
+  }
+
+  fifo[fifo_tail].code = eventCode;
+  fifo[fifo_tail].param = eventParam;
+  fifo[fifo_tail].stamp = time;
+  fifo_tail = new_tail;
+  lastAdd = millis();
+  return 1;
+}
+
+void ComplexEventManager::TemporalFifo::dump()
+{
+  int i = fifo_head;
+  TemporalEventElement tmpEventElmt;
+  String lb = "<";
+  String co = ",";
+  String rb = ">";
+
+  while (i != fifo_tail)
+  {
+    tmpEventElmt = fifo[i];
+
+    Serial.print(lb + millis() + co + tmpEventElmt.code + co + tmpEventElmt.param + rb);
+
+    i = (i +1)%FIFO_SIZE;
+  }
+  Serial.println();
+}
+
+void ComplexEventManager::TemporalFifo::trigger()
+{
+  // look for oldest data
+  if ((length() > 0 )&& (millis() - fifo[fifo_head].stamp) > 4000) // TTL
+  {
+    fifo_head = (fifo_head + 1) % FIFO_SIZE;
+  }
+}
+
+int ComplexEventManager::TemporalFifo::length()
+{
+  if (fifo_tail >= fifo_head)
+    return fifo_tail - fifo_head;
+  return fifo_tail + FIFO_SIZE - fifo_head;
+}
+
+ComplexEventManager::TemporalFifo* ComplexEventManager::TemporalFifo::filterGreater(int threshold)
+{
+  String s = "filtering in progress ";
+  int n = length();
+  String s1 = " [";
+  String s2 = ",";
+  String s3 = "]";
+  Serial.println(s + n + s1 + fifo_head + s2 + fifo_tail + s3);
+
+  ComplexEventManager::TemporalFifo new_fifo(0, mInterval);
+  int i = fifo_head;
+  while (i != fifo_tail)
+  {
+    if (fifo[i].param >= threshold)
+    {
+      new_fifo.queueEvent(fifo[i].code, fifo[i].param, false);
+    }
+    i = (i +1)%FIFO_SIZE;
+  }
+
+  return &new_fifo;
+
+}
+
+/*ComplexEventManager::TemporalFifo::
+{}
+*/

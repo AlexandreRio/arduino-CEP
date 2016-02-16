@@ -64,11 +64,12 @@ class ComplexEventManager
     // Actual number of events in queue
     int getNumEventsInQueue();
 
+    void trigger();
 
     // tries to insert an event into the queue;
     // returns true if successful, false if the
     // queue if full and the event cannot be inserted
-    boolean queueEvent( int eventCode, int eventParam);
+    boolean queueEvent( int eventCode, int eventParam, boolean timeCheck = true, unsigned long time = millis());
 
     // this must be called regularly (usually by calling it inside the loop() function)
     int processEvent();
@@ -134,18 +135,27 @@ class ComplexEventManager
         boolean isEmpty();
         boolean isFull();
 
-        boolean queueEvent(int eventCode, int eventParam);
+        int avg();
+        void dump();
+        void trigger();
+
+        ComplexEventManager::TemporalFifo *filterGreater(int threshold);
+
+        boolean queueEvent(int eventCode, int eventParam, boolean timeCheck = true, unsigned long time = millis());
+        boolean popEvent(int* eventCode, int* eventParam);
       private:
 
         struct TemporalEventElement
         {
-          // might be resource consuming
           unsigned long stamp;
           int code;
           int param;
         };
 
+        unsigned int mLength;
+        unsigned int mInterval;
         unsigned long lastAdd = 0;
+        unsigned long lastRem = 0;
         TemporalEventElement fifo[FIFO_SIZE];
         int fifo_head = 0;
         int fifo_tail = 0;
@@ -228,7 +238,7 @@ class ComplexEventManager
 
     };
 
-    Fifo mFifo;
+    TemporalFifo mFifo;
     ListenerList mListeners;
 };
 
@@ -240,6 +250,11 @@ inline int ComplexEventManager::avg()
 inline void ComplexEventManager::dump()
 {
   mFifo.dump();
+}
+
+inline void ComplexEventManager::trigger()
+{
+  mFifo.trigger();
 }
 
 inline void ComplexEventManager::filterGreater(int threshold)
@@ -312,9 +327,9 @@ inline int ComplexEventManager::getNumEventsInQueue()
   return mFifo.length();
 }
 
-inline boolean ComplexEventManager::queueEvent(int eventCode,int eventParam)
+inline boolean ComplexEventManager::queueEvent(int eventCode,int eventParam, boolean timeCheck, unsigned long time)
 {
-  return mFifo.queueEvent(eventCode, eventParam);
+  return mFifo.queueEvent(eventCode, eventParam, timeCheck, time);
 }
 
 inline boolean ComplexEventManager::ListenerList::isEmpty()
