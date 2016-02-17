@@ -4,7 +4,7 @@
 // ComplexEventManager part
 /*****************************************************/
 
-ComplexEventManager::ComplexEventManager() : mFifo(0, 400) // first param is actually ignored
+ComplexEventManager::ComplexEventManager(unsigned int length, unsigned int interval) : mFifo(length, interval) // first param is actually ignored
 {}
 
 int ComplexEventManager::processEvent()
@@ -361,13 +361,6 @@ ComplexEventManager::TemporalFifo::TemporalFifo(unsigned int length, unsigned in
 
 int ComplexEventManager::TemporalFifo::avg()
 {
-  //unsigned long sum = 0;
-  //int i = fifo_head;
-  //while (i != fifo_tail)
-  //{
-  //  sum += fifo[i].param;
-  //  i = (i +1)%FIFO_SIZE;
-  //}
   return sum/length();
 }
 
@@ -406,7 +399,7 @@ void ComplexEventManager::TemporalFifo::dump()
   {
     tmpEventElmt = fifo[i];
 
-    Serial.print(lb + millis() + co + tmpEventElmt.code + co + tmpEventElmt.param + rb);
+    Serial.print(lb + tmpEventElmt.stamp + co + tmpEventElmt.code + co + tmpEventElmt.param + rb);
 
     i = (i +1)%FIFO_SIZE;
   }
@@ -418,7 +411,7 @@ void ComplexEventManager::TemporalFifo::dump()
 void ComplexEventManager::TemporalFifo::trigger()
 {
   // look for oldest data
-  if ((length() > 0 )&& (millis() - fifo[fifo_head].stamp) > TTL) // TTL
+  if ((length() > 0 )&& (millis() - fifo[fifo_head].stamp) > TTL)
   {
     sum -= fifo[fifo_head].param;
     fifo_head = (fifo_head + 1) % FIFO_SIZE;
@@ -430,6 +423,11 @@ int ComplexEventManager::TemporalFifo::length()
   if (fifo_tail >= fifo_head)
     return fifo_tail - fifo_head;
   return fifo_tail + FIFO_SIZE - fifo_head;
+}
+
+boolean ComplexEventManager::TemporalFifo::isFull()
+{
+  return fifo_head == ((fifo_tail + 1) % FIFO_SIZE);
 }
 
 ComplexEventManager::TemporalFifo* ComplexEventManager::TemporalFifo::filterGreater(int threshold)
@@ -447,7 +445,7 @@ ComplexEventManager::TemporalFifo* ComplexEventManager::TemporalFifo::filterGrea
   {
     if (fifo[i].param >= threshold)
     {
-      new_fifo.queueEvent(fifo[i].code, fifo[i].param, false);
+      new_fifo.queueEvent(fifo[i].code, fifo[i].param, false, fifo[i].stamp);
     }
     i = (i +1)%FIFO_SIZE;
   }
@@ -456,6 +454,42 @@ ComplexEventManager::TemporalFifo* ComplexEventManager::TemporalFifo::filterGrea
 
 }
 
-/*ComplexEventManager::TemporalFifo::
-{}
-*/
+ComplexEventManager::TemporalFifo::TemporalEventElement ComplexEventManager::TemporalFifo::operator[](int idx)
+{
+  return fifo[idx];
+}
+
+ComplexEventManager* ComplexEventManager::merge(ComplexEventManager* cm1, ComplexEventManager* cm2)
+{
+  int i  = cm1->mFifo.fifo_head;
+  int ii = cm1->mFifo.fifo_tail;
+  int j  = cm2->mFifo.fifo_head;
+  int jj = cm2->mFifo.fifo_tail;
+
+  ComplexEventManager cmRet(0, cm1->mFifo.mInterval);
+
+  Serial.println("Merging window");
+
+  ComplexEventManager::TemporalFifo::TemporalEventElement t1 = cm1->mFifo[i];
+  ComplexEventManager::TemporalFifo::TemporalEventElement t2 = cm2->mFifo[j];
+  while ((i != ii || j != jj) && !cmRet.isEventQueueFull())
+  {
+    if (t1.stamp <= t2.stamp || j == jj)
+    {
+      cmRet.queueEvent(t1.code, t1.param, false, t1.stamp);
+      i = (i+1) % FIFO_SIZE;
+      t1 = cm1->mFifo[i];
+    }
+    else if (t1.stamp > t2.stamp || i == ii)
+    {
+      cmRet.queueEvent(t2.code, t2.param, false, t2.stamp);
+      j = (j+1) % FIFO_SIZE;
+      t2 = cm2->mFifo[j];
+    }
+  }
+
+  Serial.print("done merging, new size is ");
+  Serial.println(cmRet.getNumEventsInQueue());
+  return &cmRet;
+}
+

@@ -4,7 +4,7 @@
 #include <Arduino.h>
 
 #define TTL 4000
-#define FIFO_SIZE 12
+#define FIFO_SIZE 50
 #define EVENTMANAGER_LISTENER_LIST_SIZE 8
 
 class ComplexEventManager
@@ -12,6 +12,7 @@ class ComplexEventManager
 
   public:
     typedef void ( *EventListener )( int eventCode, int eventParam );
+    typedef boolean (*Filter)(int param);
 
     enum EventType
     {
@@ -20,7 +21,7 @@ class ComplexEventManager
       kEventSensor2
     };
 
-    ComplexEventManager();
+    ComplexEventManager(unsigned int length, unsigned int interval);
 
     // Add a listener
     // Returns true if the listener is successfully installed, false otherwise (e.g. the dispatch table is full)
@@ -65,6 +66,7 @@ class ComplexEventManager
     // Actual number of events in queue
     int getNumEventsInQueue();
 
+    static ComplexEventManager* merge(ComplexEventManager* cm1, ComplexEventManager* cm2);
     void trigger();
 
     // tries to insert an event into the queue;
@@ -131,6 +133,7 @@ class ComplexEventManager
       public:
         TemporalFifo(unsigned int length, unsigned int interval);
 
+
         int length();
         int available();
         boolean isEmpty();
@@ -140,11 +143,14 @@ class ComplexEventManager
         void dump();
         void trigger();
 
-        ComplexEventManager::TemporalFifo *filterGreater(int threshold);
+        ComplexEventManager::TemporalFifo* filterGreater(int threshold);
 
         boolean queueEvent(int eventCode, int eventParam, boolean timeCheck = true, unsigned long time = millis());
         boolean popEvent(int* eventCode, int* eventParam);
-      private:
+
+        int fifo_head = 0;
+        int fifo_tail = 0;
+        unsigned int mInterval;
 
         struct TemporalEventElement
         {
@@ -153,13 +159,14 @@ class ComplexEventManager
           int param;
         };
 
+        ComplexEventManager::TemporalFifo::TemporalEventElement operator[](int idx);
+      private:
+
+
         unsigned int sum = 0;
         unsigned int mLength = 0;
-        unsigned int mInterval;
         unsigned long lastAdd = 0;
         TemporalEventElement fifo[FIFO_SIZE];
-        int fifo_head = 0;
-        int fifo_tail = 0;
     };
 
     // ListenerList class used internally by EventManager
