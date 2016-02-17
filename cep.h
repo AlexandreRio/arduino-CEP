@@ -67,6 +67,8 @@ class ComplexEventManager
     int getNumEventsInQueue();
 
     static ComplexEventManager* merge(ComplexEventManager* cm1, ComplexEventManager* cm2);
+    static ComplexEventManager* join(ComplexEventManager* cm1, ComplexEventManager* cm2, unsigned int width);
+
     void trigger();
 
     // tries to insert an event into the queue;

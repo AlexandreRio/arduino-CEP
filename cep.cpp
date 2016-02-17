@@ -459,6 +459,35 @@ ComplexEventManager::TemporalFifo::TemporalEventElement ComplexEventManager::Tem
   return fifo[idx];
 }
 
+ComplexEventManager* ComplexEventManager::join(ComplexEventManager* cm1, ComplexEventManager* cm2, unsigned int width)
+{
+  int i  = cm1->mFifo.fifo_head;
+  int ii = cm1->mFifo.fifo_tail;
+  int j  = cm2->mFifo.fifo_head;
+  int jj = cm2->mFifo.fifo_tail;
+
+  ComplexEventManager cmRet(0, cm1->mFifo.mInterval);
+
+  ComplexEventManager::TemporalFifo::TemporalEventElement t1 = cm1->mFifo[i];
+  ComplexEventManager::TemporalFifo::TemporalEventElement t2 = cm2->mFifo[j];
+  while (i != ii && j != jj && !cmRet.isEventQueueFull())
+  {
+    unsigned int diff = (t1.stamp > t2.stamp) ? t1.stamp - t2.stamp : t2.stamp - t1.stamp;
+
+    if (diff <= width)
+    {
+      cmRet.queueEvent(ComplexEventManager::kEventNone, 42, false, t1.stamp);
+    }
+
+    i = (i+1) % FIFO_SIZE;
+    t1 = cm1->mFifo[i];
+    j = (j+1) % FIFO_SIZE;
+    t2 = cm2->mFifo[j];
+  }
+
+  return &cmRet;
+}
+
 ComplexEventManager* ComplexEventManager::merge(ComplexEventManager* cm1, ComplexEventManager* cm2)
 {
   int i  = cm1->mFifo.fifo_head;
