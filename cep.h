@@ -153,10 +153,10 @@ class ComplexEventManager
           int param;
         };
 
-        unsigned int mLength;
+        unsigned int sum = 0;
+        unsigned int mLength = 0;
         unsigned int mInterval;
         unsigned long lastAdd = 0;
-        unsigned long lastRem = 0;
         TemporalEventElement fifo[FIFO_SIZE];
         int fifo_head = 0;
         int fifo_tail = 0;

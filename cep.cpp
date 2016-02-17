@@ -359,20 +359,36 @@ ComplexEventManager::Fifo* ComplexEventManager::Fifo::filterGreater(int threshol
 ComplexEventManager::TemporalFifo::TemporalFifo(unsigned int length, unsigned int interval) : mLength(length), mInterval(interval)
 {}
 
+int ComplexEventManager::TemporalFifo::avg()
+{
+  //unsigned long sum = 0;
+  //int i = fifo_head;
+  //while (i != fifo_tail)
+  //{
+  //  sum += fifo[i].param;
+  //  i = (i +1)%FIFO_SIZE;
+  //}
+  return sum/length();
+}
+
+
+
 boolean ComplexEventManager::TemporalFifo::queueEvent(int eventCode, int eventParam, boolean timeCheck, unsigned long time)
 {
   if (timeCheck && (millis() - lastAdd) < mInterval)
     return 0; // litteraly too soon
 
   int new_tail = (fifo_tail + 1) % FIFO_SIZE;
-  if (new_tail == fifo_head)
+  if (new_tail == fifo_head) //TODO should refactor moving the head
   {
+    sum -= fifo[fifo_head].param;
     fifo_head = (fifo_head + 1) % FIFO_SIZE;
   }
 
   fifo[fifo_tail].code = eventCode;
   fifo[fifo_tail].param = eventParam;
   fifo[fifo_tail].stamp = time;
+  sum += eventParam;
   fifo_tail = new_tail;
   lastAdd = millis();
   return 1;
@@ -394,6 +410,8 @@ void ComplexEventManager::TemporalFifo::dump()
 
     i = (i +1)%FIFO_SIZE;
   }
+  String m = " mean is: ";
+  Serial.print(m + avg());
   Serial.println();
 }
 
@@ -402,6 +420,7 @@ void ComplexEventManager::TemporalFifo::trigger()
   // look for oldest data
   if ((length() > 0 )&& (millis() - fifo[fifo_head].stamp) > TTL) // TTL
   {
+    sum -= fifo[fifo_head].param;
     fifo_head = (fifo_head + 1) % FIFO_SIZE;
   }
 }
