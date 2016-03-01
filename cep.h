@@ -7,353 +7,84 @@
 #define FIFO_SIZE 50
 #define EVENTMANAGER_LISTENER_LIST_SIZE 8
 
-class ComplexEventManager
+/*
+ * All arithmetic operations on windows are entirely computed every time,
+ * no temporary values are stored, this is an impl choice, no benchmarks
+ * have been done.
+ *
+ */
+class Fifo
 {
-
   public:
-    typedef void ( *EventListener )( int eventCode, int eventParam );
-    typedef boolean (*Filter)(int param);
+    Fifo(unsigned int size, unsigned int step = 0);
+    ~Fifo();
 
-    enum EventType
-    {
-      kEventNone = 200,
-      kEventSensor1,
-      kEventSensor2
-    };
+    int length();
+    int available();
+    boolean isEmpty();
+    boolean isFull();
 
-    ComplexEventManager(unsigned int length, unsigned int interval);
-
-    // Add a listener
-    // Returns true if the listener is successfully installed, false otherwise (e.g. the dispatch table is full)
-    boolean addListener( int eventCode, EventListener listener );
-
-    // Remove (event, listener) pair (all occurrences)
-    // Other listeners with the same function or event code will not be affected
-    boolean removeListener( int eventCode, EventListener listener );
-
-    // Remove all occurrances of a listener
-    // Removes this listener regardless of the event code; returns number removed
-    // Useful when one listener handles many different events
-    int removeListener( EventListener listener );
-
-    // Enable or disable a listener
-    // Return true if the listener was successfully enabled or disabled, false if the listener was not found
-    boolean enableListener( int eventCode, EventListener listener, boolean enable );
-
-    // Returns the current enabled/disabled state of the (eventCode, listener) combo
-    boolean isListenerEnabled( int eventCode, EventListener listener );
-
-    // The default listener is a callback function that is called when an event with no listener is processed
-    // These functions set, clear, and enable/disable the default listener
-    boolean setDefaultListener( EventListener listener );
-    void removeDefaultListener();
-    void enableDefaultListener( boolean enable );
-
-    // Is the ListenerList empty?
-    boolean isListenerListEmpty();
-
-    // Is the ListenerList full?
-    boolean isListenerListFull();
-
-    int numListeners();
-
-    // Returns true if no events are in the queue
-    boolean isEventQueueEmpty();
-
-    // Returns true if no more events can be inserted into the queue
-    boolean isEventQueueFull();
-
-    // Actual number of events in queue
-    int getNumEventsInQueue();
-
-    static ComplexEventManager* merge(ComplexEventManager* cm1, ComplexEventManager* cm2);
-    static ComplexEventManager* join(ComplexEventManager* cm1, ComplexEventManager* cm2, unsigned int width);
-
-    void trigger();
-
-    // tries to insert an event into the queue;
-    // returns true if successful, false if the
-    // queue if full and the event cannot be inserted
-    boolean queueEvent( int eventCode, int eventParam, boolean timeCheck = true, unsigned long time = millis());
-
-    // this must be called regularly (usually by calling it inside the loop() function)
-    int processEvent();
-
-    // this function can be called to process ALL events in the queue
-    // WARNING:  if interrupts are adding events as fast as they are being processed
-    // this function might never return.  YOU HAVE BEEN WARNED.
-    int processAllEvents();
-
-    // A more general approach should be used here, something like a
-    // function pointer to call and determine if a value must be kept
-    // or discarded
-    void filterGreater(int threshold);
-
-    void dump();
-    // compute the average _param_ value in the fifo
     int avg();
+    //Dump the content of the event queue formatted to the Serial output
+    void dump();
+    Fifo *filterGreater(int threshold);
+
+    boolean queueEvent(int eventCode, int eventParam);
+    boolean popEvent(int* eventCode, int* eventParam);
 
   private:
-    /*
-     * All arithmetic operations on windows are entirely computed every time,
-     * no temporary values are stored, this is an impl choice, no benchmarks
-     * have been done.
-     *
-     */
-    class Fifo
+    struct EventElement
     {
-      public:
-        Fifo();
-
-        int length();
-        int available();
-        boolean isEmpty();
-        boolean isFull();
-
-        int avg();
-        //Dump the content of the event queue formatted to the Serial output
-        void dump();
-        ComplexEventManager::Fifo *filterGreater(int threshold);
-
-        boolean queueEvent(int eventCode, int eventParam);
-        boolean popEvent(int* eventCode, int* eventParam);
-
-      private:
-        struct EventElement
-        {
-          int code;
-          int param;
-        };
-
-        EventElement fifo[FIFO_SIZE];
-        int fifo_head = 0;
-        int fifo_tail = 0;
+      int code;
+      int param;
     };
 
-    class TemporalFifo
-    {
-      public:
-        TemporalFifo(unsigned int length, unsigned int interval);
-
-
-        int length();
-        int available();
-        boolean isEmpty();
-        boolean isFull();
-
-        int avg();
-        void dump();
-        void trigger();
-
-        ComplexEventManager::TemporalFifo* filterGreater(int threshold);
-
-        boolean queueEvent(int eventCode, int eventParam, boolean timeCheck = true, unsigned long time = millis());
-        boolean popEvent(int* eventCode, int* eventParam);
-
-        int fifo_head = 0;
-        int fifo_tail = 0;
-        unsigned int mInterval;
-
-        struct TemporalEventElement
-        {
-          unsigned long stamp;
-          int code;
-          int param;
-        };
-
-        ComplexEventManager::TemporalFifo::TemporalEventElement operator[](int idx);
-      private:
-
-
-        unsigned int sum = 0;
-        unsigned int mLength = 0;
-        unsigned long lastAdd = 0;
-        TemporalEventElement fifo[FIFO_SIZE];
-    };
-
-    // ListenerList class used internally by EventManager
-    class ListenerList
-    {
-
-      public:
-
-        // Create an event manager
-        ListenerList();
-
-        // Add a listener
-        // Returns true if the listener is successfully installed, false otherwise (e.g. the dispatch table is full)
-        boolean addListener( int eventCode, EventListener listener );
-
-        // Remove event listener pair (all occurrences)
-        // Other listeners with the same function or eventCode will not be affected
-        boolean removeListener( int eventCode, EventListener listener );
-
-        // Remove all occurrances of a listener
-        // Removes this listener regardless of the eventCode; returns number removed
-        int removeListener( EventListener listener );
-
-        // Enable or disable a listener
-        // Return true if the listener was successfully enabled or disabled, false if the listener was not found
-        boolean enableListener( int eventCode, EventListener listener, boolean enable );
-
-        boolean isListenerEnabled( int eventCode, EventListener listener );
-
-        // The default listener is a callback function that is called when an event with no listener is processed
-        boolean setDefaultListener( EventListener listener );
-        void removeDefaultListener();
-        void enableDefaultListener( boolean enable );
-
-        // Is the ListenerList empty?
-        boolean isEmpty();
-
-        // Is the ListenerList full?
-        boolean isFull();
-
-        // Send an event to the listeners; returns number of listeners that handled the event
-        int sendEvent( int eventCode, int param );
-
-        int numListeners();
-
-      private:
-
-        // Maximum number of event/callback entries
-        // Can be changed to save memory or allow more events to be dispatched
-        static const int kMaxListeners = EVENTMANAGER_LISTENER_LIST_SIZE;
-
-        // Actual number of event listeners
-        int mNumListeners;
-
-        // Listener structure and corresponding array
-        struct ListenerItem
-        {
-          EventListener callback;// The listener function
-          int eventCode;// The event code
-          boolean enabled;// Each listener can be enabled or disabled
-        };
-        ListenerItem mListeners[ kMaxListeners ];
-
-        // Callback function to be called for event types which have no listener
-        EventListener mDefaultCallback;
-
-        // Once set, the default callback function can be enabled or disabled
-        boolean mDefaultCallbackEnabled;
-
-        // get the current number of entries in the dispatch table
-        int getNumEntries();
-
-        // returns the array index of the specified listener or -1 if no such event/function couple is found
-        int searchListeners( int eventCode, EventListener listener);
-        int searchListeners( EventListener listener );
-        int searchEventCode( int eventCode );
-
-    };
-
-    TemporalFifo mFifo;
-    ListenerList mListeners;
+    EventElement* fifo[];
+    unsigned int setp = 0;
+    int fifo_head = 0;
+    int fifo_tail = 0;
 };
 
-inline int ComplexEventManager::avg()
+class TemporalFifo
 {
-  return mFifo.avg();
-}
+  public:
+    TemporalFifo(unsigned int length, unsigned int interval);
+    ~TemporalFifo();
 
-inline void ComplexEventManager::dump()
-{
-  mFifo.dump();
-}
+    int length();
+    int available();
+    boolean isEmpty();
+    boolean isFull();
 
-inline void ComplexEventManager::trigger()
-{
-  mFifo.trigger();
-}
+    int avg();
+    void dump();
+    void trigger();
 
-inline void ComplexEventManager::filterGreater(int threshold)
-{
-  mFifo = *mFifo.filterGreater(threshold);
-}
+    TemporalFifo* filterGreater(int threshold);
 
-inline boolean ComplexEventManager::addListener( int eventCode, EventListener listener )
-{
-  return mListeners.addListener( eventCode, listener );
-}
+    boolean queueEvent(int eventCode, int eventParam, boolean timeCheck = true, unsigned long time = millis());
+    boolean popEvent(int* eventCode, int* eventParam);
 
-inline boolean ComplexEventManager::removeListener( int eventCode, EventListener listener )
-{
-  return mListeners.removeListener( eventCode, listener );
-}
+    int fifo_head = 0;
+    int fifo_tail = 0;
+    unsigned int mInterval;
 
-inline int ComplexEventManager::removeListener( EventListener listener )
-{
-  return mListeners.removeListener( listener );
-}
+    struct TemporalEventElement
+    {
+      //TODO: use a smaller variable size by storing only the time spent modulo
+      //the time window: millis() % mLength 
+      unsigned long stamp;
+      int code;
+      int param;
+    };
 
-inline boolean ComplexEventManager::enableListener( int eventCode, EventListener listener, boolean enable )
-{
-  return mListeners.enableListener( eventCode, listener, enable );
-}
+    TemporalEventElement operator[](int idx);
+  private:
 
-inline boolean ComplexEventManager::isListenerEnabled( int eventCode, EventListener listener )
-{
-  return mListeners.isListenerEnabled( eventCode, listener );
-}
+    unsigned int sum = 0;
+    unsigned int mLength = 0;
+    unsigned long lastAdd = 0;
+    TemporalEventElement fifo[FIFO_SIZE];
+};
 
-inline boolean ComplexEventManager::setDefaultListener( EventListener listener )
-{
-  return mListeners.setDefaultListener( listener );
-}
-
-inline void ComplexEventManager::removeDefaultListener()
-{
-  mListeners.removeDefaultListener();
-}
-
-inline void ComplexEventManager::enableDefaultListener( boolean enable )
-{
-  mListeners.enableDefaultListener( enable );
-}
-
-inline boolean ComplexEventManager::isListenerListEmpty()
-{
-  return mListeners.isEmpty();
-}
-
-inline boolean ComplexEventManager::isListenerListFull()
-{
-  return mListeners.isFull();
-}
-
-inline boolean ComplexEventManager::isEventQueueFull()
-{
-  return mFifo.isFull();
-}
-
-inline boolean ComplexEventManager::isEventQueueEmpty()
-{
-  return mFifo.isEmpty();
-}
-
-inline int ComplexEventManager::getNumEventsInQueue()
-{
-  return mFifo.length();
-}
-
-inline boolean ComplexEventManager::queueEvent(int eventCode,int eventParam, boolean timeCheck, unsigned long time)
-{
-  return mFifo.queueEvent(eventCode, eventParam, timeCheck, time);
-}
-
-inline boolean ComplexEventManager::ListenerList::isEmpty()
-{
-  return (mNumListeners == 0);
-}
-
-inline boolean ComplexEventManager::ListenerList::isFull()
-{
-  return (mNumListeners == kMaxListeners);
-}
-
-inline int ComplexEventManager::ListenerList::getNumEntries()
-{
-  return mNumListeners;
-}
 #endif
