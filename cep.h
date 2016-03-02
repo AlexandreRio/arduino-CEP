@@ -12,6 +12,9 @@
  * no temporary values are stored, this is an impl choice, no benchmarks
  * have been done.
  *
+ * The tail of the fifo indicates the next free element, thus a fifo of size
+ * n can hold n-1 element, that's why the constructor should increment the
+ * given parameter size to fit what provided size.
  */
 class Fifo
 {
@@ -27,22 +30,26 @@ class Fifo
     int avg();
     //Dump the content of the event queue formatted to the Serial output
     void dump();
-    Fifo *filterGreater(int threshold);
+    //Fifo *filterGreater(int threshold);
 
-    boolean queueEvent(int eventCode, int eventParam);
-    boolean popEvent(int* eventCode, int* eventParam);
+    boolean queueEvent(unsigned int eventCode, void* eventContent);
+    boolean popEvent(int* eventCode, void* eventParam);
 
-  private:
     struct EventElement
     {
-      int code;
-      int param;
+      unsigned int code;
+      void* content;
+      unsigned long stamp;
     };
 
-    EventElement* fifo[];
-    unsigned int setp = 0;
+    EventElement operator[](int idx);
+
+    EventElement* fifo;
     int fifo_head = 0;
     int fifo_tail = 0;
+    unsigned int mStep;
+    unsigned int mSize;
+  private:
 };
 
 class TemporalFifo
@@ -84,7 +91,7 @@ class TemporalFifo
     unsigned int sum = 0;
     unsigned int mLength = 0;
     unsigned long lastAdd = 0;
-    TemporalEventElement fifo[FIFO_SIZE];
+    TemporalEventElement* fifo;
 };
 
 #endif

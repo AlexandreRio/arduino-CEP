@@ -4,9 +4,9 @@
 // FIFO part
 /*****************************************************/
 
-Fifo::Fifo(unsigned int size, unsigned int step)
+Fifo::Fifo(unsigned int size, unsigned int step) : mSize(size + 1), mStep(step)
 {
-  fifo = new EventElement[size];
+  fifo = new EventElement[size + 1];
 }
 
 Fifo::~Fifo()
@@ -18,56 +18,68 @@ int Fifo::length()
 {
   if (fifo_tail >= fifo_head)
     return fifo_tail - fifo_head;
-  return fifo_tail + FIFO_SIZE - fifo_head;
+  return fifo_tail + mSize - fifo_head;
 }
 
-boolean Fifo::isFull()
+inline boolean Fifo::isFull()
 {
-  return fifo_head == ((fifo_tail + 1) % FIFO_SIZE);
+  return fifo_head == ((fifo_tail + 1) % mSize);
 }
 
 
-boolean Fifo::isEmpty()
+inline boolean Fifo::isEmpty()
 {
   return fifo_head == fifo_tail;
 }
 
-boolean Fifo::queueEvent(int eventCode, int eventParam)
+boolean Fifo::queueEvent(unsigned int eventCode, void* eventContent)
 {
-  int new_tail = (fifo_tail + 1) % FIFO_SIZE;
+  //TODO should consider the step attribute if the buffer is full
+  int new_tail = (fifo_tail + 1) % mSize;
   if (new_tail == fifo_head)
   {
-    fifo_head = (fifo_head + 1) % FIFO_SIZE;
+    free (fifo[fifo_head].content);
+    fifo_head = (fifo_head + 1) % mSize;
   }
 
-  fifo[fifo_tail].code = eventCode;
-  fifo[fifo_tail].param = eventParam;
+  fifo[fifo_tail].code    = eventCode;
+  fifo[fifo_tail].content = eventContent; //TESTME
+  fifo[fifo_tail].stamp   = millis(); //FIXME use a relative timestamp
+
   fifo_tail = new_tail;
+
   return 1;
 }
 
-boolean Fifo::popEvent(int* eventCode, int* eventParam)
+boolean Fifo::popEvent(int* eventCode, void* eventParam)
 {
   if (isEmpty())
     return false;
 
   *eventCode = fifo[fifo_head].code;
-  *eventParam = fifo[fifo_head].param;
+  //*eventParam = fifo[fifo_head].content;
   fifo_head = (fifo_head + 1)%FIFO_SIZE;
   return true;
+}
+
+Fifo::EventElement Fifo::operator[](int idx)
+{
+  //no check on the index value, thug life
+  return fifo[idx];
 }
 
 int Fifo::avg()
 {
   dump();
-  unsigned long sum = 0;
-  int i = fifo_head;
-  while (i != fifo_tail)
-  {
-    sum += fifo[i].param;
-    i = (i +1)%FIFO_SIZE;
-  }
-  return sum/length();
+  //unsigned long sum = 0;
+  //int i = fifo_head;
+  //while (i != fifo_tail)
+  //{
+  //  sum += fifo[i].param;
+  //  i = (i +1)%FIFO_SIZE;
+  //}
+  //return sum/length();
+  return -1;
 }
 
 void Fifo::dump()
@@ -82,7 +94,10 @@ void Fifo::dump()
   {
     tmpEventElmt = fifo[i];
 
-    Serial.print(lb + tmpEventElmt.code + co + tmpEventElmt.param + rb);
+    //if (tmpEventElmt.code == 0) {
+    //  byte c[] = (*tmpEventElmt.content);
+    //}
+    //Serial.print(lb + tmpEventElmt.code + co + c[0] + rb);
 
     i = (i +1)%FIFO_SIZE;
   }
@@ -90,28 +105,28 @@ void Fifo::dump()
 
 }
 
-Fifo* Fifo::filterGreater(int threshold)
-{
-  String s = "filtering in progress ";
-  int n = length();
-  String s1 = " [";
-  String s2 = ",";
-  String s3 = "]";
-  Serial.println(s + n + s1 + fifo_head + s2 + fifo_tail + s3);
-
-  Fifo new_fifo;
-  int i = fifo_head;
-  while (i != fifo_tail)
-  {
-    if (fifo[i].param >= threshold)
-    {
-      new_fifo.queueEvent(fifo[i].code, fifo[i].param);
-    }
-    i = (i +1)%FIFO_SIZE;
-  }
-
-  return &new_fifo;
-}
+//Fifo* Fifo::filterGreater(int threshold)
+//{
+//  String s = "filtering in progress ";
+//  int n = length();
+//  String s1 = " [";
+//  String s2 = ",";
+//  String s3 = "]";
+//  Serial.println(s + n + s1 + fifo_head + s2 + fifo_tail + s3);
+//
+//  Fifo new_fifo;
+//  int i = fifo_head;
+//  while (i != fifo_tail)
+//  {
+//    if (fifo[i].param >= threshold)
+//    {
+//      new_fifo.queueEvent(fifo[i].code, fifo[i].param);
+//    }
+//    i = (i +1)%FIFO_SIZE;
+//  }
+//
+//  return &new_fifo;
+//}
 
 /*****************************************************/
 // TemporalFifo part
