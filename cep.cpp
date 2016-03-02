@@ -68,19 +68,18 @@ Fifo::EventElement Fifo::operator[](int idx)
   return fifo[idx];
 }
 
-int Fifo::avg()
-{
-  dump();
-  //unsigned long sum = 0;
-  //int i = fifo_head;
-  //while (i != fifo_tail)
-  //{
-  //  sum += fifo[i].param;
-  //  i = (i +1)%FIFO_SIZE;
-  //}
-  //return sum/length();
-  return -1;
-}
+//int Fifo::avg()
+//{
+//  dump();
+//  unsigned long sum = 0;
+//  int i = fifo_head;
+//  while (i != fifo_tail)
+//  {
+//    sum += fifo[i].param;
+//    i = (i +1)%FIFO_SIZE;
+//  }
+//  return sum/length();
+//}
 
 void Fifo::dump()
 {

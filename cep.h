@@ -27,12 +27,14 @@ class Fifo
     boolean isEmpty();
     boolean isFull();
 
-    int avg();
+    //int avg();
     //Dump the content of the event queue formatted to the Serial output
     void dump();
     //Fifo *filterGreater(int threshold);
 
-    boolean queueEvent(unsigned int eventCode, void* eventContent);
+    boolean queueEventM1(int param);
+    boolear queueEventM2();
+
     boolean popEvent(int* eventCode, void* eventParam);
 
     struct EventElement
@@ -43,7 +45,6 @@ class Fifo
     };
 
     EventElement operator[](int idx);
-
     EventElement* fifo;
     int fifo_head = 0;
     int fifo_tail = 0;
