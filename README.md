@@ -1,3 +1,5 @@
+#This library is under heavy refactoring, many features are broken and its main purpose is even changing
+
 #Arduino-CEP
 
 Partially based on this: https://github.com/igormiktor/arduino-EventManager
