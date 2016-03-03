@@ -4,95 +4,55 @@
 #include <Arduino.h>
 
 #define TTL 4000
-#define FIFO_SIZE 50
-#define EVENTMANAGER_LISTENER_LIST_SIZE 8
+#define TIMESTAMP_DATASIZE 4
+#define DEFAULT_NUMBER_MSG 10
 
-/*
- * All arithmetic operations on windows are entirely computed every time,
- * no temporary values are stored, this is an impl choice, no benchmarks
- * have been done.
- *
- * The tail of the fifo indicates the next free element, thus a fifo of size
- * n can hold n-1 element, that's why the constructor should increment the
- * given parameter size to fit what provided size.
- */
-class Fifo
+// computed size: buffer_size * (stamp size + sum(data_size))
+#define M1_NUMBER_MSG     DEFAULT_NUMBER_MSG
+#define M1_ELEMENT_SIZE   (TIMESTAMP_DATASIZE + 2)
+#define M1_FIFO_SIZE      ((M1_NUMBER_MSG * M1_ELEMENT_SIZE) + 1)
+
+#define M2_NUMBER_MSG     DEFAULT_NUMBER_MSG
+#define M2_ELEMENT_SIZE   (TIMESTAMP_DATASIZE)
+#define M2_FIFO_SIZE      ((M2_NUMBER_MSG * M2_ELEMENT_SIZE) + 1)
+
+class streamFilteredJoin1_Fifo
 {
   public:
-    Fifo(unsigned int size, unsigned int step = 0);
-    ~Fifo();
+    streamFilteredJoin1_Fifo();
+    ~streamFilteredJoin1_Fifo();
 
-    int length();
-    int available();
-    boolean isEmpty();
-    boolean isFull();
+    int m1_length();
+    int m2_length();
 
-    //int avg();
-    //Dump the content of the event queue formatted to the Serial output
+    int m1_available();
+    int m2_available();
+
+    boolean m1_isEmpty();
+    boolean m2_isEmpty();
+
+    boolean m1_isFull();
+    boolean m2_isFull();
+
     void dump();
-    //Fifo *filterGreater(int threshold);
 
-    boolean queueEventM1(int param);
-    boolear queueEventM2();
+    void m1_queueEvent(int param);
+    void m2_queueEvent();
 
-    boolean popEvent(int* eventCode, void* eventParam);
+    void checkTrigger();
 
-    struct EventElement
-    {
-      unsigned int code;
-      void* content;
-      unsigned long stamp;
-    };
+    //boolean popEvent(int* eventCode, void* eventParam);
 
-    EventElement operator[](int idx);
-    EventElement* fifo;
-    int fifo_head = 0;
-    int fifo_tail = 0;
-    unsigned int mStep;
-    unsigned int mSize;
   private:
-};
+    byte m1_fifo[M1_FIFO_SIZE];
+    byte m2_fifo[M2_FIFO_SIZE];
 
-class TemporalFifo
-{
-  public:
-    TemporalFifo(unsigned int length, unsigned int interval);
-    ~TemporalFifo();
+    unsigned int m1_fifo_head = 0;
+    unsigned int m1_fifo_tail = 0;
 
-    int length();
-    int available();
-    boolean isEmpty();
-    boolean isFull();
+    unsigned int m2_fifo_head = 0;
+    unsigned int m2_fifo_tail = 0;
 
-    int avg();
-    void dump();
-    void trigger();
-
-    TemporalFifo* filterGreater(int threshold);
-
-    boolean queueEvent(int eventCode, int eventParam, boolean timeCheck = true, unsigned long time = millis());
-    boolean popEvent(int* eventCode, int* eventParam);
-
-    int fifo_head = 0;
-    int fifo_tail = 0;
-    unsigned int mInterval;
-
-    struct TemporalEventElement
-    {
-      //TODO: use a smaller variable size by storing only the time spent modulo
-      //the time window: millis() % mLength 
-      unsigned long stamp;
-      int code;
-      int param;
-    };
-
-    TemporalEventElement operator[](int idx);
-  private:
-
-    unsigned int sum = 0;
-    unsigned int mLength = 0;
-    unsigned long lastAdd = 0;
-    TemporalEventElement* fifo;
 };
 
 #endif
