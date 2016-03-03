@@ -28,11 +28,11 @@ class streamFilteredJoin1_Fifo
     int m1_available();
     int m2_available();
 
-    boolean m1_isEmpty();
-    boolean m2_isEmpty();
+    inline boolean m1_isEmpty();
+    inline boolean m2_isEmpty();
 
-    boolean m1_isFull();
-    boolean m2_isFull();
+    inline boolean m1_isFull();
+    inline boolean m2_isFull();
 
     void dump();
 
