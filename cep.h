@@ -39,6 +39,9 @@ class streamFilteredJoin1_Fifo
     void m1_queueEvent(int param);
     void m2_queueEvent();
 
+    void m1_popEvent();
+    void m2_popEvent();
+
     void checkTrigger();
 
     //boolean popEvent(int* eventCode, void* eventParam);
